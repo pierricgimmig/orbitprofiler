@@ -896,8 +896,7 @@ TEST(LinuxTracingIntegrationTest, ThreadStateSlices) {
       continue;
     }
 
-    // We currently don't set the pid.
-    EXPECT_EQ(thread_state_slice.pid(), 0);
+    EXPECT_EQ(thread_state_slice.pid(), fixture.GetPuppetPid());
 
     EXPECT_TRUE(
         thread_state_slice.thread_state() == orbit_grpc_protos::ThreadStateSlice::kRunning ||

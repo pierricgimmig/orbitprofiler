@@ -46,22 +46,25 @@ namespace orbit_linux_tracing {
 
 class ThreadStateManager {
  public:
-  void OnInitialState(uint64_t timestamp_ns, pid_t tid,
+  void OnInitialState(uint64_t timestamp_ns, pid_t pid, pid_t tid,
                       orbit_grpc_protos::ThreadStateSlice::ThreadState state);
-  void OnNewTask(uint64_t timestamp_ns, pid_t tid);
+  void OnNewTask(uint64_t timestamp_ns, pid_t pid, pid_t tid);
   [[nodiscard]] std::optional<orbit_grpc_protos::ThreadStateSlice> OnSchedWakeup(
-      uint64_t timestamp_ns, pid_t tid);
+      uint64_t timestamp_ns, pid_t pid, pid_t tid);
   [[nodiscard]] std::optional<orbit_grpc_protos::ThreadStateSlice> OnSchedSwitchIn(
-      uint64_t timestamp_ns, pid_t tid);
+      uint64_t timestamp_ns, pid_t pid, pid_t tid);
   [[nodiscard]] std::optional<orbit_grpc_protos::ThreadStateSlice> OnSchedSwitchOut(
-      uint64_t timestamp_ns, pid_t tid, orbit_grpc_protos::ThreadStateSlice::ThreadState new_state);
+      uint64_t timestamp_ns, pid_t pid, pid_t tid,
+      orbit_grpc_protos::ThreadStateSlice::ThreadState new_state);
   [[nodiscard]] std::vector<orbit_grpc_protos::ThreadStateSlice> OnCaptureFinished(
       uint64_t timestamp_ns);
 
  private:
   struct OpenState {
-    OpenState(orbit_grpc_protos::ThreadStateSlice::ThreadState state, uint64_t begin_timestamp_ns)
-        : state{state}, begin_timestamp_ns{begin_timestamp_ns} {}
+    OpenState(pid_t pid, orbit_grpc_protos::ThreadStateSlice::ThreadState state,
+              uint64_t begin_timestamp_ns)
+        : pid{pid}, state{state}, begin_timestamp_ns{begin_timestamp_ns} {}
+    pid_t pid;
     orbit_grpc_protos::ThreadStateSlice::ThreadState state;
     uint64_t begin_timestamp_ns;
   };

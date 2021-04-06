@@ -270,6 +270,7 @@ void CaptureEventProcessor::ProcessThreadName(const ThreadName& thread_name) {
 
 void CaptureEventProcessor::ProcessThreadStateSlice(const ThreadStateSlice& thread_state_slice) {
   ThreadStateSliceInfo slice_info;
+  // Note: thread_state_slice.pid() is available, but currently dropped.
   slice_info.set_tid(thread_state_slice.tid());
   switch (thread_state_slice.thread_state()) {
     case ThreadStateSlice::kRunning:

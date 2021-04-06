@@ -82,7 +82,7 @@ void SwitchesStatesNamesVisitor::ProcessInitialState(uint64_t timestamp_ns, pid_
     ERROR("Parsing thread state char '%c' for tid %d", state_char, tid);
     return;
   }
-  state_manager_.OnInitialState(timestamp_ns, tid, initial_state.value());
+  state_manager_.OnInitialState(timestamp_ns, thread_state_pid_filter_, tid, initial_state.value());
 }
 
 void SwitchesStatesNamesVisitor::visit(TaskNewtaskPerfEvent* event) {
@@ -97,7 +97,7 @@ void SwitchesStatesNamesVisitor::visit(TaskNewtaskPerfEvent* event) {
   if (!TidMatchesPidFilter(event->GetNewTid())) {
     return;
   }
-  state_manager_.OnNewTask(event->GetTimestamp(), event->GetNewTid());
+  state_manager_.OnNewTask(event->GetTimestamp(), thread_state_pid_filter_, event->GetNewTid());
 }
 
 void SwitchesStatesNamesVisitor::visit(SchedSwitchPerfEvent* event) {
@@ -138,8 +138,8 @@ void SwitchesStatesNamesVisitor::visit(SchedSwitchPerfEvent* event) {
   // Process the context switch out for thread state.
   if (event->GetPrevTid() != 0 && TidMatchesPidFilter(event->GetPrevTid())) {
     ThreadStateSlice::ThreadState new_state = GetThreadStateFromBits(event->GetPrevState());
-    std::optional<ThreadStateSlice> out_slice =
-        state_manager_.OnSchedSwitchOut(event->GetTimestamp(), event->GetPrevTid(), new_state);
+    std::optional<ThreadStateSlice> out_slice = state_manager_.OnSchedSwitchOut(
+        event->GetTimestamp(), thread_state_pid_filter_, event->GetPrevTid(), new_state);
     if (out_slice.has_value()) {
       CHECK(listener_ != nullptr);
       listener_->OnThreadStateSlice(std::move(out_slice.value()));
@@ -151,8 +151,8 @@ void SwitchesStatesNamesVisitor::visit(SchedSwitchPerfEvent* event) {
 
   // Process the context switch in for thread state.
   if (event->GetNextTid() != 0 && TidMatchesPidFilter(event->GetNextTid())) {
-    std::optional<ThreadStateSlice> in_slice =
-        state_manager_.OnSchedSwitchIn(event->GetTimestamp(), event->GetNextTid());
+    std::optional<ThreadStateSlice> in_slice = state_manager_.OnSchedSwitchIn(
+        event->GetTimestamp(), thread_state_pid_filter_, event->GetNextTid());
     if (in_slice.has_value()) {
       CHECK(listener_ != nullptr);
       listener_->OnThreadStateSlice(std::move(in_slice.value()));
@@ -168,8 +168,8 @@ void SwitchesStatesNamesVisitor::visit(SchedWakeupPerfEvent* event) {
     return;
   }
 
-  std::optional<ThreadStateSlice> state_slice =
-      state_manager_.OnSchedWakeup(event->GetTimestamp(), event->GetWokenTid());
+  std::optional<ThreadStateSlice> state_slice = state_manager_.OnSchedWakeup(
+      event->GetTimestamp(), thread_state_pid_filter_, event->GetWokenTid());
   if (state_slice.has_value()) {
     CHECK(listener_ != nullptr);
     listener_->OnThreadStateSlice(std::move(state_slice.value()));
