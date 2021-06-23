@@ -22,12 +22,12 @@ if [[ -v IN_DOCKER ]]; then
   pip3 install conan==1.36.0
   export QT_QPA_PLATFORM=offscreen
 
-  $REPO_ROOT/third_party/conan/configs/install.sh || exit $?
-  conan user -r artifactory $ARTIFACTORY_USERNAME -p $ARTIFACTORY_API_KEY || exit $?
-  if [ -n "$BINTRAY_USERNAME" -a -n "$BINTRAY_API_KEY" ]; then
-    conan remote enable bintray
-    conan user -r bintray $BINTRAY_USERNAME -p $BINTRAY_API_KEY || exit $?
-    conan remote disable bintray
+  if [[ -v ORBIT_PUBLIC_BUILD ]]; then
+    $REPO_ROOT/third_party/conan/configs/install.sh --force-public-remotes
+    conan user -r bintray $BINTRAY_USERNAME -p $BINTRAY_API_KEY
+  else
+    $REPO_ROOT/third_party/conan/configs/install.sh
+    conan user -r artifactory $ARTIFACTORY_USERNAME -p $ARTIFACTORY_API_KEY
   fi
 
   for profile in $@; do
@@ -65,11 +65,10 @@ if [[ -v IN_DOCKER ]]; then
       conan build -bf build_$profile/ $REPO_ROOT || exit $?
 
       echo "$PACKAGES" | while read package; do
-        conan upload -r artifactory -c $package
-        if [[ -n "$BINTRAY_USERNAME" && -n "$BINTRAY_API_KEY" ]] && echo "$package" | grep "orbitdeps/stable" > /dev/null; then
-          conan remote enable bintray
+        if [[ -v ORBIT_PUBLIC_BUILD ]]; then
           conan upload -r bintray -c $package
-          conan remote disable bintray
+        else
+          conan upload -r artifactory -c $package
         fi
       done
     fi
@@ -100,6 +99,7 @@ else
              -e BINTRAY_USERNAME -e BINTRAY_API_KEY \
              -e ORBIT_OVERRIDE_ARTIFACTORY_URL \
              -e IN_DOCKER \
+             -e ORBIT_PUBLIC_BUILD \
              `find_container_for_conan_profile $profile` \
              $SCRIPT $profile || exit $?
     done
@@ -119,6 +119,7 @@ else
        -e BINTRAY_USERNAME -e BINTRAY_API_KEY \
        -e ORBIT_OVERRIDE_ARTIFACTORY_URL \
        -e IN_DOCKER \
+       -e ORBIT_PUBLIC_BUILD \
        `find_container_for_conan_profile $profile` \
        "C:/Program Files/Git/bin/bash.exe" \
        -c "/c$SCRIPT $profile" || exit $?
