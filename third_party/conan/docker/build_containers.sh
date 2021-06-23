@@ -23,6 +23,9 @@ declare -A profile_to_dockerfile=( \
   ["gcc9_debug"]="gcc9" \
   ["gcc9_release"]="gcc9" \
   ["gcc9_relwithdebinfo"]="gcc9" \
+  ["gcc10_debug"]="gcc10" \
+  ["gcc10_release"]="gcc10" \
+  ["gcc10_relwithdebinfo"]="gcc10" \
   ["msvc2019_release"]="msvc2019" \
   ["msvc2019_relwithdebinfo"]="msvc2019" \
   ["msvc2019_debug"]="msvc2019" \
@@ -35,7 +38,7 @@ declare -A profile_to_dockerfile=( \
 
 if [ "$#" -eq 0 ]; then
   if [ "$(uname -s)" == "Linux" ]; then
-    profiles=( {clang{7,8,9},gcc9,ggp}_{release,relwithdebinfo,debug} clang_format license_headers iwyu coverage_clang9 )
+    profiles=( {clang{7,8,9},gcc{9,10},ggp}_{release,relwithdebinfo,debug} clang_format license_headers iwyu coverage_clang9 )
   else
     profiles=( msvc2019_{release,relwithdebinfo,debug} )
   fi
