@@ -11,6 +11,8 @@ function conan_profile_exists {
 readonly REPO_ROOT="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../../../" >/dev/null 2>&1 && pwd )"
 readonly REPO_ROOT_WIN="$( cd "$( dirname "${BASH_SOURCE[0]}" )/../../../" >/dev/null 2>&1 && pwd -W 2>/dev/null)"
 
+source "${REPO_ROOT}/third_party/conan/docker/utils.sh"
+
 # Path to script inside the docker container
 readonly SCRIPT="/mnt/third_party/conan/scripts/build_and_upload_dependencies.sh"
 
@@ -98,7 +100,8 @@ else
              -e BINTRAY_USERNAME -e BINTRAY_API_KEY \
              -e ORBIT_OVERRIDE_ARTIFACTORY_URL \
              -e IN_DOCKER \
-             gcr.io/orbitprofiler/$profile:latest $SCRIPT $profile || exit $?
+             `find_container_for_conan_profile $profile` \
+             $SCRIPT $profile || exit $?
     done
   else # Windows
     curl -s http://artifactory.internal/ >/dev/null 2>&1 || true
@@ -116,7 +119,8 @@ else
        -e BINTRAY_USERNAME -e BINTRAY_API_KEY \
        -e ORBIT_OVERRIDE_ARTIFACTORY_URL \
        -e IN_DOCKER \
-       gcr.io/orbitprofiler/$profile:latest "C:/Program Files/Git/bin/bash.exe" \
+       `find_container_for_conan_profile $profile` \
+       "C:/Program Files/Git/bin/bash.exe" \
        -c "/c$SCRIPT $profile" || exit $?
     done
   fi
