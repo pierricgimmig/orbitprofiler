@@ -72,7 +72,7 @@ if [ "$1" ]; then
   done
 else
   if [ $(uname -s) == "Linux" ]; then
-    PROFILES=( {clang{7,8,9},gcc{8,9},ggp}_{release,relwithdebinfo,debug} )
+    PROFILES=( {clang{7,9},gcc9,ggp}_{release,relwithdebinfo,debug} )
 
     curl -s http://artifactory.internal/ >/dev/null 2>&1
     if [ -z "${ORBIT_OVERRIDE_ARTIFACTORY_URL}" -a $? -ne 0 ]; then
@@ -88,7 +88,7 @@ else
              gcr.io/orbitprofiler/$profile:latest $SCRIPT $profile || exit $?
     done
   else # Windows
-    PROFILES=( msvc{2017,2019}_{release,relwithdebinfo,debug}{,_x86} )
+    PROFILES=( msvc2019_{release,relwithdebinfo,debug} )
 
     curl -s http://artifactory.internal/ >/dev/null 2>&1
     if [ -z "${ORBIT_OVERRIDE_ARTIFACTORY_URL}" -a $? -ne 0 ]; then
