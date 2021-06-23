@@ -1,0 +1,10 @@
+include(msvc2019_common)
+
+[settings]
+build_type=Release
+
+[build_requires]
+&: ninja/1.10.2
+
+[env]
+CONAN_CMAKE_GENERATOR=Ninja
