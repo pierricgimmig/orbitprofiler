@@ -31,6 +31,7 @@ class SchedulerTrack final : public TimerTrack {
 
   [[nodiscard]] float GetHeight() const override;
   [[nodiscard]] bool IsCollapsible() const override { return false; }
+  [[nodiscard]] bool IsFilterable() const override { return false; }
 
   void UpdateBoxHeight() override;
   [[nodiscard]] float GetYFromTimer(

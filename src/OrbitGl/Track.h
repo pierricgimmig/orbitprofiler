@@ -92,6 +92,7 @@ class Track : public orbit_gl::CaptureViewElement, public std::enable_shared_fro
 
   virtual void OnCollapseToggle(bool is_collapsed);
   [[nodiscard]] virtual bool IsCollapsible() const { return false; }
+  [[nodiscard]] virtual bool IsFilterable() const { return !pinned_; }
   TriangleToggle* GetTriangleToggle() const { return collapse_toggle_.get(); }
   [[nodiscard]] int32_t GetProcessId() const { return process_id_; }
   void SetProcessId(uint32_t pid) { process_id_ = pid; }

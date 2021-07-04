@@ -168,6 +168,10 @@ void TrackManager::UpdateVisibleTrackList() {
   visible_tracks_.clear();
   std::vector<std::string> filters = absl::StrSplit(filter_, ' ', absl::SkipWhitespace());
   for (const auto& track : sorted_tracks_) {
+    if (!track->IsFilterable()) {
+      visible_tracks_.push_back(track);
+      continue;
+    }
     std::string lower_case_label = absl::AsciiStrToLower(track->GetLabel());
     for (auto& filter : filters) {
       if (absl::StrContains(lower_case_label, filter)) {
