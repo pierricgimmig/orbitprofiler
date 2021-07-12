@@ -203,29 +203,28 @@ struct dynamically_sized_perf_event_stack_sample {
 
 class StackSamplePerfEvent : public PerfEvent {
  public:
-  std::unique_ptr<dynamically_sized_perf_event_stack_sample> ring_buffer_record;
+  dynamically_sized_perf_event_stack_sample ring_buffer_record;
 
-  explicit StackSamplePerfEvent(uint64_t dyn_size)
-      : ring_buffer_record{std::make_unique<dynamically_sized_perf_event_stack_sample>(dyn_size)} {}
+  explicit StackSamplePerfEvent(uint64_t dyn_size) : ring_buffer_record{dyn_size} {}
 
-  uint64_t GetTimestamp() const override { return ring_buffer_record->sample_id.time; }
+  uint64_t GetTimestamp() const override { return ring_buffer_record.sample_id.time; }
 
   void Accept(PerfEventVisitor* visitor) override;
 
-  pid_t GetPid() const { return ring_buffer_record->sample_id.pid; }
-  pid_t GetTid() const { return ring_buffer_record->sample_id.tid; }
+  pid_t GetPid() const { return ring_buffer_record.sample_id.pid; }
+  pid_t GetTid() const { return ring_buffer_record.sample_id.tid; }
 
-  uint64_t GetStreamId() const { return ring_buffer_record->sample_id.stream_id; }
+  uint64_t GetStreamId() const { return ring_buffer_record.sample_id.stream_id; }
 
-  uint32_t GetCpu() const { return ring_buffer_record->sample_id.cpu; }
+  uint32_t GetCpu() const { return ring_buffer_record.sample_id.cpu; }
 
   std::array<uint64_t, PERF_REG_X86_64_MAX> GetRegisters() const {
-    return perf_event_sample_regs_user_all_to_register_array(ring_buffer_record->regs);
+    return perf_event_sample_regs_user_all_to_register_array(ring_buffer_record.regs);
   }
 
-  const char* GetStackData() const { return ring_buffer_record->stack.data.get(); }
-  char* GetStackData() { return ring_buffer_record->stack.data.get(); }
-  uint64_t GetStackSize() const { return ring_buffer_record->stack.dyn_size; }
+  const char* GetStackData() const { return ring_buffer_record.stack.data.get(); }
+  char* GetStackData() { return ring_buffer_record.stack.data.get(); }
+  uint64_t GetStackSize() const { return ring_buffer_record.stack.dyn_size; }
 
  private:
 };

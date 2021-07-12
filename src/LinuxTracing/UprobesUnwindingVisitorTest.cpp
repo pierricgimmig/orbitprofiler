@@ -185,7 +185,7 @@ TEST_F(UprobesUnwindingVisitorTest,
       .cpu = 0,
       .res = 0,
   };
-  event.ring_buffer_record->sample_id = sample_id;
+  event.ring_buffer_record.sample_id = sample_id;
 
   EXPECT_CALL(return_address_manager_, PatchSample).Times(1).WillOnce(Return());
   EXPECT_CALL(maps_, Get).Times(1).WillOnce(Return(nullptr));
@@ -253,7 +253,7 @@ TEST_F(UprobesUnwindingVisitorTest, VisitEmptyStackSampleWithoutUprobesDoesNothi
       .cpu = 0,
       .res = 0,
   };
-  event.ring_buffer_record->sample_id = sample_id;
+  event.ring_buffer_record.sample_id = sample_id;
 
   EXPECT_CALL(return_address_manager_, PatchSample).Times(1).WillOnce(Return());
   EXPECT_CALL(maps_, Get).Times(1).WillOnce(Return(nullptr));
@@ -293,7 +293,7 @@ TEST_F(UprobesUnwindingVisitorTest,
       .cpu = 0,
       .res = 0,
   };
-  event.ring_buffer_record->sample_id = sample_id;
+  event.ring_buffer_record.sample_id = sample_id;
 
   EXPECT_CALL(return_address_manager_, PatchSample).Times(1).WillRepeatedly(Return());
   EXPECT_CALL(maps_, Get).Times(1).WillOnce(Return(nullptr));
@@ -352,7 +352,7 @@ TEST_F(UprobesUnwindingVisitorTest,
       .cpu = 0,
       .res = 0,
   };
-  event.ring_buffer_record->sample_id = sample_id;
+  event.ring_buffer_record.sample_id = sample_id;
 
   EXPECT_CALL(return_address_manager_, PatchSample).Times(1).WillOnce(Return());
   EXPECT_CALL(maps_, Get).Times(1).WillOnce(Return(nullptr));
@@ -408,7 +408,7 @@ TEST_F(UprobesUnwindingVisitorTest, VisitStackSampleWithinUprobeSendsInUprobesCa
       .cpu = 0,
       .res = 0,
   };
-  event.ring_buffer_record->sample_id = sample_id;
+  event.ring_buffer_record.sample_id = sample_id;
 
   EXPECT_CALL(return_address_manager_, PatchSample).Times(1).WillOnce(Return());
   EXPECT_CALL(maps_, Get).Times(1).WillOnce(Return(nullptr));
