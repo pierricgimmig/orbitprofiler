@@ -225,8 +225,6 @@ class StackSamplePerfEvent : public PerfEvent {
   const char* GetStackData() const { return ring_buffer_record.stack.data.get(); }
   char* GetStackData() { return ring_buffer_record.stack.data.get(); }
   uint64_t GetStackSize() const { return ring_buffer_record.stack.dyn_size; }
-
- private:
 };
 
 class CallchainSamplePerfEvent : public PerfEvent {
