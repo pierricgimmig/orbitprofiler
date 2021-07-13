@@ -47,9 +47,10 @@ std::unique_ptr<GenericTracepointPerfEvent> ConsumeGenericTracepointPerfEvent(
 std::unique_ptr<MmapPerfEvent> ConsumeMmapPerfEvent(PerfEventRingBuffer* ring_buffer,
                                                     const perf_event_header& header);
 
-template <typename T, typename = std::enable_if_t<std::is_base_of_v<TracepointPerfEvent, T>>>
-std::unique_ptr<T> ConsumeTracepointPerfEvent(PerfEventRingBuffer* ring_buffer,
-                                              const perf_event_header& header) {
+template <typename T,
+          typename = std::enable_if_t<std::is_base_of_v<VariableSizeTracepointPerfEvent, T>>>
+std::unique_ptr<T> ConsumeVariableSizeTracepointPerfEvent(PerfEventRingBuffer* ring_buffer,
+                                                          const perf_event_header& header) {
   uint32_t tracepoint_size;
   ring_buffer->ReadValueAtOffset(&tracepoint_size, offsetof(perf_event_raw_sample_fixed, size));
   auto event = std::make_unique<T>(tracepoint_size);

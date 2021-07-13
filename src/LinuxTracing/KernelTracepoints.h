@@ -23,7 +23,10 @@ struct __attribute__((__packed__)) task_newtask_tracepoint {
   char comm[16];
   uint64_t clone_flags;
   int16_t oom_score_adj;
+  char reserved[14];  // These bytes are not documented in the format file.
 };
+
+static_assert(sizeof(task_newtask_tracepoint) == 52);
 
 struct __attribute__((__packed__)) task_rename_tracepoint {
   tracepoint_common common;
@@ -31,7 +34,10 @@ struct __attribute__((__packed__)) task_rename_tracepoint {
   char oldcomm[16];
   char newcomm[16];
   int16_t oom_score_adj;
+  char reserved[6];  // These bytes are not documented in the format file.
 };
+
+static_assert(sizeof(task_rename_tracepoint) == 52);
 
 struct __attribute__((__packed__)) sched_switch_tracepoint {
   tracepoint_common common;
@@ -42,8 +48,10 @@ struct __attribute__((__packed__)) sched_switch_tracepoint {
   char next_comm[16];
   int32_t next_pid;
   int32_t next_prio;
-  uint32_t reserved;  // These four bytes are not documented in the format file.
+  char reserved[4];  // These bytes are not documented in the format file.
 };
+
+static_assert(sizeof(sched_switch_tracepoint) == 68);
 
 struct __attribute__((__packed__)) sched_wakeup_tracepoint {
   tracepoint_common common;
@@ -52,7 +60,10 @@ struct __attribute__((__packed__)) sched_wakeup_tracepoint {
   int32_t prio;
   int32_t success;
   int32_t target_cpu;
+  char reserved[4];  // These bytes are not documented in the format file.
 };
+
+static_assert(sizeof(sched_wakeup_tracepoint) == 44);
 
 struct __attribute__((__packed__)) amdgpu_cs_ioctl_tracepoint {
   tracepoint_common common;

@@ -993,41 +993,48 @@ uint64_t TracerThread::ProcessSampleEventAndReturnTimestamp(const perf_event_hea
     ++stats_.sample_count;
 
   } else if (is_task_newtask) {
-    auto event = ConsumeTracepointPerfEvent<TaskNewtaskPerfEvent>(ring_buffer, header);
+    auto event = make_unique_for_overwrite<TaskNewtaskPerfEvent>();
+    ring_buffer->ConsumeRecord(header, &event->ring_buffer_record);
     // task:task_newtask is used by SwitchesStatesNamesVisitor
     // for thread names and thread states.
     event->SetOrderedInFileDescriptor(fd);
     DeferEvent(std::move(event));
   } else if (is_task_rename) {
-    auto event = ConsumeTracepointPerfEvent<TaskRenamePerfEvent>(ring_buffer, header);
+    auto event = make_unique_for_overwrite<TaskRenamePerfEvent>();
+    ring_buffer->ConsumeRecord(header, &event->ring_buffer_record);
     // task:task_newtask is used by SwitchesStatesNamesVisitor for thread names.
     event->SetOrderedInFileDescriptor(fd);
     DeferEvent(std::move(event));
 
   } else if (is_sched_switch) {
-    auto event = ConsumeTracepointPerfEvent<SchedSwitchPerfEvent>(ring_buffer, header);
+    auto event = make_unique_for_overwrite<SchedSwitchPerfEvent>();
+    ring_buffer->ConsumeRecord(header, &event->ring_buffer_record);
     event->SetOrderedInFileDescriptor(fd);
     DeferEvent(std::move(event));
     ++stats_.sched_switch_count;
   } else if (is_sched_wakeup) {
-    auto event = ConsumeTracepointPerfEvent<SchedWakeupPerfEvent>(ring_buffer, header);
+    auto event = make_unique_for_overwrite<SchedWakeupPerfEvent>();
+    ring_buffer->ConsumeRecord(header, &event->ring_buffer_record);
     event->SetOrderedInFileDescriptor(fd);
     DeferEvent(std::move(event));
 
   } else if (is_amdgpu_cs_ioctl_event) {
-    auto event = ConsumeTracepointPerfEvent<AmdgpuCsIoctlPerfEvent>(ring_buffer, header);
+    auto event =
+        ConsumeVariableSizeTracepointPerfEvent<AmdgpuCsIoctlPerfEvent>(ring_buffer, header);
     // Do not filter GPU tracepoint events based on pid as we want to have
     // visibility into all GPU activity across the system.
     event->SetOrderedInFileDescriptor(PerfEvent::kNotOrderedInAnyFileDescriptor);
     DeferEvent(std::move(event));
     ++stats_.gpu_events_count;
   } else if (is_amdgpu_sched_run_job_event) {
-    auto event = ConsumeTracepointPerfEvent<AmdgpuSchedRunJobPerfEvent>(ring_buffer, header);
+    auto event =
+        ConsumeVariableSizeTracepointPerfEvent<AmdgpuSchedRunJobPerfEvent>(ring_buffer, header);
     event->SetOrderedInFileDescriptor(PerfEvent::kNotOrderedInAnyFileDescriptor);
     DeferEvent(std::move(event));
     ++stats_.gpu_events_count;
   } else if (is_dma_fence_signaled_event) {
-    auto event = ConsumeTracepointPerfEvent<DmaFenceSignaledPerfEvent>(ring_buffer, header);
+    auto event =
+        ConsumeVariableSizeTracepointPerfEvent<DmaFenceSignaledPerfEvent>(ring_buffer, header);
     event->SetOrderedInFileDescriptor(PerfEvent::kNotOrderedInAnyFileDescriptor);
     // dma_fence_signaled events can be out of order of timestamp even on the same ring buffer,
     // hence why kNotOrderedInAnyFileDescriptor. To be safe, do the same for the other GPU events.

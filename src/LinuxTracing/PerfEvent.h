@@ -344,8 +344,6 @@ class MmapPerfEvent : public PerfEvent {
 
 class GenericTracepointPerfEvent : public PerfEvent {
  public:
-  explicit GenericTracepointPerfEvent() {}
-
   perf_event_raw_sample_fixed ring_buffer_record;
 
   void Accept(PerfEventVisitor* visitor) override;
@@ -359,70 +357,43 @@ class GenericTracepointPerfEvent : public PerfEvent {
   uint32_t GetCpu() const { return ring_buffer_record.sample_id.cpu; }
 };
 
-class TracepointPerfEvent : public PerfEvent {
+template <typename TracepointDataT>
+class FixedSizeTracepointPerfEvent : public PerfEvent {
  public:
-  explicit TracepointPerfEvent(uint32_t size)
-      : tracepoint_data{make_unique_for_overwrite<uint8_t[]>(size)} {}
-
-  perf_event_raw_sample_fixed ring_buffer_record;
-  std::unique_ptr<uint8_t[]> tracepoint_data;
+  perf_event_raw_sample<TracepointDataT> ring_buffer_record;
 
   uint64_t GetTimestamp() const override { return ring_buffer_record.sample_id.time; }
-
-  uint64_t GetStreamId() const { return ring_buffer_record.sample_id.stream_id; }
-
-  uint32_t GetCpu() const { return ring_buffer_record.sample_id.cpu; }
-
-  uint16_t GetTracepointId() const { return GetTracepointCommon().common_type; }
-
- protected:
-  const tracepoint_common& GetTracepointCommon() const {
-    return *reinterpret_cast<const tracepoint_common*>(tracepoint_data.get());
-  }
-
-  template <typename TracepointData>
-  const TracepointData& GetTypedTracepointData() const {
-    return *reinterpret_cast<const TracepointData*>(tracepoint_data.get());
-  }
 };
 
-class TaskNewtaskPerfEvent : public TracepointPerfEvent {
+class TaskNewtaskPerfEvent : public FixedSizeTracepointPerfEvent<task_newtask_tracepoint> {
  public:
-  explicit TaskNewtaskPerfEvent(uint32_t tracepoint_size) : TracepointPerfEvent(tracepoint_size) {}
-
   void Accept(PerfEventVisitor* visitor) override;
 
   // The tracepoint format calls this "pid" but it's effectively the thread id.
   // Note that ring_buffer_record.sample_id.pid and ring_buffer_record.sample_id.tid are NOT the pid
   // and tid of the new process/thread, but the ones of the process/thread that created this one.
-  pid_t GetNewTid() const { return GetTypedTracepointData<task_newtask_tracepoint>().pid; }
+  pid_t GetNewTid() const { return ring_buffer_record.data.pid; }
 
-  const char* GetComm() const { return GetTypedTracepointData<task_newtask_tracepoint>().comm; }
+  const char* GetComm() const { return ring_buffer_record.data.comm; }
 };
 
-class TaskRenamePerfEvent : public TracepointPerfEvent {
+class TaskRenamePerfEvent : public FixedSizeTracepointPerfEvent<task_rename_tracepoint> {
  public:
-  explicit TaskRenamePerfEvent(uint32_t tracepoint_size) : TracepointPerfEvent(tracepoint_size) {}
-
   void Accept(PerfEventVisitor* visitor) override;
 
   // The tracepoint format calls this "pid" but it's effectively the thread id.
   // This should match ring_buffer_record.sample_id.tid.
-  pid_t GetRenamedTid() const { return GetTypedTracepointData<task_rename_tracepoint>().pid; }
+  pid_t GetRenamedTid() const { return ring_buffer_record.data.pid; }
 
-  const char* GetOldComm() const {
-    return GetTypedTracepointData<task_rename_tracepoint>().oldcomm;
-  }
-  const char* GetNewComm() const {
-    return GetTypedTracepointData<task_rename_tracepoint>().newcomm;
-  }
+  const char* GetOldComm() const { return ring_buffer_record.data.oldcomm; }
+  const char* GetNewComm() const { return ring_buffer_record.data.newcomm; }
 };
 
-class SchedSwitchPerfEvent : public TracepointPerfEvent {
+class SchedSwitchPerfEvent : public FixedSizeTracepointPerfEvent<sched_switch_tracepoint> {
  public:
-  explicit SchedSwitchPerfEvent(uint32_t tracepoint_size) : TracepointPerfEvent(tracepoint_size) {}
-
   void Accept(PerfEventVisitor* visitor) override;
+
+  uint32_t GetCpu() const { return ring_buffer_record.sample_id.cpu; }
 
   // As the tracepoint data does not include the pid of the process that the thread being switched
   // out belongs to, we use the pid set by perf_event_open in the corresponding generic field of the
@@ -432,40 +403,47 @@ class SchedSwitchPerfEvent : public TracepointPerfEvent {
   // the tracepoint data.
   pid_t GetPrevPidOrMinusOne() const { return ring_buffer_record.sample_id.pid; }
 
-  const char* GetPrevComm() const {
-    return GetTypedTracepointData<sched_switch_tracepoint>().prev_comm;
-  }
+  const char* GetPrevComm() const { return ring_buffer_record.data.prev_comm; }
+  pid_t GetPrevTid() const { return ring_buffer_record.data.prev_pid; }
+  int64_t GetPrevState() const { return ring_buffer_record.data.prev_state; }
 
-  pid_t GetPrevTid() const { return GetTypedTracepointData<sched_switch_tracepoint>().prev_pid; }
-
-  int64_t GetPrevState() const {
-    return GetTypedTracepointData<sched_switch_tracepoint>().prev_state;
-  }
-
-  const char* GetNextComm() const {
-    return GetTypedTracepointData<sched_switch_tracepoint>().next_comm;
-  }
-
-  pid_t GetNextTid() const { return GetTypedTracepointData<sched_switch_tracepoint>().next_pid; }
+  const char* GetNextComm() const { return ring_buffer_record.data.next_comm; }
+  pid_t GetNextTid() const { return ring_buffer_record.data.next_pid; }
 };
 
-class SchedWakeupPerfEvent : public TracepointPerfEvent {
+class SchedWakeupPerfEvent : public FixedSizeTracepointPerfEvent<sched_wakeup_tracepoint> {
  public:
-  explicit SchedWakeupPerfEvent(uint32_t tracepoint_size) : TracepointPerfEvent(tracepoint_size) {}
-
   void Accept(PerfEventVisitor* visitor) override;
 
   pid_t GetWakerPid() const { return ring_buffer_record.sample_id.pid; }
-
   pid_t GetWakerTid() const { return ring_buffer_record.sample_id.tid; }
 
   // The tracepoint format calls this "pid" but it's effectively the thread id.
-  pid_t GetWokenTid() const { return GetTypedTracepointData<sched_wakeup_tracepoint>().pid; }
+  pid_t GetWokenTid() const { return ring_buffer_record.data.pid; }
 };
 
-class GpuPerfEvent : public TracepointPerfEvent {
+class VariableSizeTracepointPerfEvent : public PerfEvent {
  public:
-  explicit GpuPerfEvent(uint32_t tracepoint_size) : TracepointPerfEvent(tracepoint_size) {}
+  explicit VariableSizeTracepointPerfEvent(uint32_t size)
+      : tracepoint_data{make_unique_for_overwrite<uint8_t[]>(size)} {}
+
+  perf_event_raw_sample_fixed ring_buffer_record;
+  std::unique_ptr<uint8_t[]> tracepoint_data;
+
+  uint64_t GetTimestamp() const override { return ring_buffer_record.sample_id.time; }
+
+ protected:
+  template <typename TracepointDataT>
+  const TracepointDataT& GetTypedTracepointData() const {
+    return *reinterpret_cast<const TracepointDataT*>(tracepoint_data.get());
+  }
+};
+
+template <typename TracepointDataT>
+class GpuPerfEvent : public VariableSizeTracepointPerfEvent {
+ public:
+  explicit GpuPerfEvent(uint32_t tracepoint_size)
+      : VariableSizeTracepointPerfEvent{tracepoint_size} {}
 
   std::string ExtractTimelineString() const {
     int32_t data_loc = GetTimeline();
@@ -488,71 +466,35 @@ class GpuPerfEvent : public TracepointPerfEvent {
 
   pid_t GetTid() const { return ring_buffer_record.sample_id.tid; }
 
-  virtual uint32_t GetContext() const = 0;
-  virtual uint32_t GetSeqno() const = 0;
+  uint32_t GetContext() const { return GetTypedTracepointData<TracepointDataT>().context; }
+  uint32_t GetSeqno() const { return GetTypedTracepointData<TracepointDataT>().seqno; }
 
- protected:
-  virtual int32_t GetTimeline() const = 0;
+ private:
+  int32_t GetTimeline() const { return GetTypedTracepointData<TracepointDataT>().timeline; }
 };
 
-class AmdgpuCsIoctlPerfEvent : public GpuPerfEvent {
+class AmdgpuCsIoctlPerfEvent : public GpuPerfEvent<amdgpu_cs_ioctl_tracepoint> {
  public:
-  explicit AmdgpuCsIoctlPerfEvent(uint32_t tracepoint_size) : GpuPerfEvent(tracepoint_size) {}
+  explicit AmdgpuCsIoctlPerfEvent(uint32_t tracepoint_size)
+      : GpuPerfEvent<amdgpu_cs_ioctl_tracepoint>{tracepoint_size} {}
 
   void Accept(PerfEventVisitor* visitor) override;
-
-  uint32_t GetContext() const override {
-    return GetTypedTracepointData<amdgpu_cs_ioctl_tracepoint>().context;
-  }
-
-  uint32_t GetSeqno() const override {
-    return GetTypedTracepointData<amdgpu_cs_ioctl_tracepoint>().seqno;
-  }
-
- protected:
-  int32_t GetTimeline() const override {
-    return GetTypedTracepointData<amdgpu_cs_ioctl_tracepoint>().timeline;
-  }
 };
 
-class AmdgpuSchedRunJobPerfEvent : public GpuPerfEvent {
+class AmdgpuSchedRunJobPerfEvent : public GpuPerfEvent<amdgpu_sched_run_job_tracepoint> {
  public:
-  explicit AmdgpuSchedRunJobPerfEvent(uint32_t tracepoint_size) : GpuPerfEvent(tracepoint_size) {}
+  explicit AmdgpuSchedRunJobPerfEvent(uint32_t tracepoint_size)
+      : GpuPerfEvent<amdgpu_sched_run_job_tracepoint>{tracepoint_size} {}
 
   void Accept(PerfEventVisitor* visitor) override;
-
-  uint32_t GetContext() const override {
-    return GetTypedTracepointData<amdgpu_sched_run_job_tracepoint>().context;
-  }
-
-  uint32_t GetSeqno() const override {
-    return GetTypedTracepointData<amdgpu_sched_run_job_tracepoint>().seqno;
-  }
-
- protected:
-  int32_t GetTimeline() const override {
-    return GetTypedTracepointData<amdgpu_sched_run_job_tracepoint>().timeline;
-  }
 };
 
-class DmaFenceSignaledPerfEvent : public GpuPerfEvent {
+class DmaFenceSignaledPerfEvent : public GpuPerfEvent<dma_fence_signaled_tracepoint> {
  public:
-  explicit DmaFenceSignaledPerfEvent(uint32_t tracepoint_size) : GpuPerfEvent(tracepoint_size) {}
+  explicit DmaFenceSignaledPerfEvent(uint32_t tracepoint_size)
+      : GpuPerfEvent<dma_fence_signaled_tracepoint>{tracepoint_size} {}
 
   void Accept(PerfEventVisitor* visitor) override;
-
-  uint32_t GetContext() const override {
-    return GetTypedTracepointData<dma_fence_signaled_tracepoint>().context;
-  }
-
-  uint32_t GetSeqno() const override {
-    return GetTypedTracepointData<dma_fence_signaled_tracepoint>().seqno;
-  }
-
- protected:
-  int32_t GetTimeline() const override {
-    return GetTypedTracepointData<dma_fence_signaled_tracepoint>().timeline;
-  }
 };
 
 }  // namespace orbit_linux_tracing
