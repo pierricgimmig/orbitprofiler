@@ -1,0 +1,35 @@
+# Copyright (c) 2021 The Orbit Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+FROM ubuntu:20.04
+
+RUN useradd -Ums /bin/bash conan && \
+    apt-get -qq update && \
+    DEBIAN_FRONTEND=noninteractive \
+        apt-get install -y --no-install-recommends \
+        cmake \
+        curl \
+        g++-10 \
+        gcc-10 \
+        git \
+        jq \
+        libglu1-mesa-dev \
+        libqt5webchannel5-dev \
+        libqt5websockets5-dev \
+        libxi-dev \
+        libxmu-dev \
+        make \
+        mesa-common-dev \
+        ninja-build \
+        python2.7 \
+        python3-pip \
+        python-is-python2 \
+        qt5-default \
+        qtwebengine5-dev \
+        zip && \
+    python3 -m pip install conan==1.36.0 && \
+    rm -rf /var/lib/apt/lists/*
+
+USER conan
+WORKDIR /home/conan

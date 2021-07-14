@@ -11,7 +11,7 @@ source "${DIR}/tags.sh"
 
 if [ "$#" -eq 0 ]; then
   if [ "$(uname -s)" == "Linux" ]; then
-    profiles=( {clang{7,8,9},gcc9,ggp}_{release,relwithdebinfo,debug} clang_format license_headers iwyu coverage_clang9 )
+    profiles=( {clang{7,8,9},gcc{9,10},ggp}_{release,relwithdebinfo,debug} clang_format license_headers iwyu coverage_clang9 )
   else
     profiles=( msvc2019_{release,relwithdebinfo,debug} )
   fi

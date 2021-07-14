@@ -45,24 +45,10 @@ if [ "$0" == "$SCRIPT" ]; then
   fi
 
 else
-  readonly CONAN_PROFILE="clang_format"
-
-  # Obtain current docker image tags and digests
-  source "$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../../" >/dev/null 2>&1 && pwd)/third_party/conan/docker/tags.sh"
-  source "$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../../" >/dev/null 2>&1 && pwd)/third_party/conan/docker/digests.sh"
-
-  # Use a specific tag from the mapping. If none is specified, fall back to `latest`.
-  readonly DOCKER_IMAGE_TAG="${docker_image_tag_mapping[${CONAN_PROFILE}]-latest}"
-
-  CONTAINER="gcr.io/orbitprofiler/${CONAN_PROFILE}:${DOCKER_IMAGE_TAG}"
-
-  if [ ${docker_image_digest_mapping[${CONAN_PROFILE}]+abc} ]; then
-    echo "Found a docker image digest. Using that to pin the container to an exact version."
-    CONTAINER="${docker_image_digest_mapping[${CONAN_PROFILE}]}"
-  fi
+  source "$(cd "$( dirname "${BASH_SOURCE[0]}" )/../../../" >/dev/null 2>&1 && pwd)/third_party/conan/docker/utils.sh"
 
   gcloud auth configure-docker --quiet
   docker run --rm --network host -v ${REPO_ROOT}:/mnt -e KOKORO_GITHUB_PULL_REQUEST_TARGET_BRANCH \
-    ${CONTAINER} $SCRIPT
+    `find_container_for_conan_profile clang_format` $SCRIPT
 fi
 
