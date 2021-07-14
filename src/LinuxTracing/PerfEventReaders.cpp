@@ -141,12 +141,12 @@ std::unique_ptr<StackSamplePerfEvent> ConsumeStackSamplePerfEvent(PerfEventRingB
   ring_buffer->ReadValueAtOffset(&dyn_size, offset_of_dyn_size);
 
   auto event = std::make_unique<StackSamplePerfEvent>(dyn_size);
-  event->ring_buffer_record->header = header;
-  ring_buffer->ReadValueAtOffset(&event->ring_buffer_record->sample_id,
+  event->ring_buffer_record.header = header;
+  ring_buffer->ReadValueAtOffset(&event->ring_buffer_record.sample_id,
                                  offsetof(perf_event_stack_sample_fixed, sample_id));
-  ring_buffer->ReadValueAtOffset(&event->ring_buffer_record->regs,
+  ring_buffer->ReadValueAtOffset(&event->ring_buffer_record.regs,
                                  offsetof(perf_event_stack_sample_fixed, regs));
-  ring_buffer->ReadRawAtOffset(event->ring_buffer_record->stack.data.get(), offset_of_data,
+  ring_buffer->ReadRawAtOffset(event->ring_buffer_record.stack.data.get(), offset_of_data,
                                dyn_size);
   ring_buffer->SkipRecord(header);
   return event;
